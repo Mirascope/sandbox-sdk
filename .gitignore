@@ -1,8 +1,8 @@
 # Python
 
-# .pytest_cache
-# .venv
-# dist
-# *.egg
-# __pycache__
-# .python-version
+.pytest_cache
+.venv
+dist
+*.egg
+__pycache__
+.python-version
