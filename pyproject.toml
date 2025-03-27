@@ -1,7 +1,7 @@
 [project]
-name = "sandbox"
+name = "sandbox-sdk"
 version = "0.0.0"
-description = "Python Sandbox"
+description = "Python Sandbox SDK"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.10"
@@ -30,9 +30,7 @@ Issues = "https://github.com/Mirascope/sandbox/issues"
 Changelog = "https://github.com/Mirascope/sandbox/releases"
 
 [project.optional-dependencies]
-docker = [
-    "docker>=7.1.0",
-]
+docker = ["docker>=7.1.0"]
 
 [tool.uv]
 dev-dependencies = [
@@ -132,6 +130,12 @@ skip = [".git", "*.lock"]
 
 [tool.coverage.report]
 exclude_also = ["@overload", "@abstractmethod", "if TYPE_CHECKING:"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["sandbox"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/sandbox"]
 
 [build-system]
 requires = ["hatchling"]
