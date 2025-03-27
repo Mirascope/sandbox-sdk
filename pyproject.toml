@@ -1,0 +1,138 @@
+[project]
+name = "sandbox"
+version = "0.0.0"
+description = "Python Sandbox"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+authors = [{ name = "William Bakst", email = "william@mirascope.com" }]
+maintainers = [{ name = "William Bakst", email = "william@mirascope.com" }]
+keywords = ["sandbox"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.urls]
+Homepage = "https://mirascope.com/sandbox"
+Documentation = "https://docs.mirascope.com/sandbox"
+Repository = "https://github.com/Mirascope/sandbox"
+Issues = "https://github.com/Mirascope/sandbox/issues"
+Changelog = "https://github.com/Mirascope/sandbox/releases"
+
+[project.optional-dependencies]
+docker = [
+    "docker>=7.1.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.9.7",
+    "pytest>=8.3.2",
+    "pyright>=1.1.396",
+    "pytest-asyncio>=0.23.8",
+    "pytest-cov>=5.0.0",
+    "pre-commit>=3.8.0",
+]
+
+[tool.uv.sources]
+sandbox = { workspace = true }
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+exclude = [
+    ".bzr",
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".git-rewrite",
+    ".hg",
+    ".mypy_cache",
+    ".nox",
+    ".pants.d",
+    ".pytype",
+    ".ruff_cache",
+    ".svn",
+    ".tox",
+    ".venv",
+    "__pypackages__",
+    "_build",
+    "buck-out",
+    "build",
+    "dist",
+    "node_modules",
+    "venv",
+]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*.py" = ["S101", "ANN"]
+"examples/*.{py,ipynb}" = ["T201", "ANN"]
+"docs/*.{py,ipynb}" = ["T201", "ANN"]
+"mirascope/experimental/*.py" = ["T201"]
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "F",
+    "I",
+    "UP",
+    "YTT",
+    "B",
+    "T10",
+    "T20",
+    "C4",
+    "PYI006",
+    "SIM",
+    "ANN",
+    "RUF022",
+]
+ignore = ['D105', 'D107', 'D205', 'D415', 'E501', 'B011', 'B028', 'B904']
+fixable = ["ALL"]
+pydocstyle = { convention = 'google' }
+unfixable = []
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.ruff.lint.isort]
+known-first-party = ['sandbox', 'tests', 'examples']
+
+[tool.pyright]
+exclude = [
+    "mirascope/beta",
+    "examples/learn/calls/basic_usage/official_sdk/bedrock_sdk.py",
+    "examples/learn/tools/basic_usage/official_sdk/bedrock_sdk.py",
+    "examples/learn/response_models/basic_usage/official_sdk/bedrock_sdk.py",
+    ".venv",
+    "build",
+]
+venvPath = "."
+venv = ".venv"
+
+[tool.codespell]
+skip = [".git", "*.lock"]
+
+[tool.coverage.report]
+exclude_also = ["@overload", "@abstractmethod", "if TYPE_CHECKING:"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
