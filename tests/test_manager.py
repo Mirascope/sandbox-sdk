@@ -189,7 +189,7 @@ def test_sandbox_run_function_invalid_json_output(mocked_sandbox_factory):
     create_sandbox, mock_runner = mocked_sandbox_factory
     invalid_stdout = "This is not JSON { invalid"
     mock_runner.execute_script.return_value = Result(
-        stdout=invalid_stdout, stderr="", error=None
+        stdout=invalid_stdout, stderr="", error=None, result=None
     )
     with create_sandbox() as sandbox:
         result = sandbox.run_function(

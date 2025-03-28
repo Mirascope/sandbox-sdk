@@ -30,6 +30,9 @@ def runner() -> SubprocessSandboxRunner:
 def test_subprocess_runner_simple_script(runner: SubprocessSandboxRunner):
     """Test running a simple script."""
     result = runner.execute_script(SIMPLE_SCRIPT)
+    assert "stdout" in result
+    assert "stderr" in result
+    assert "error" in result
     assert "Hello from subprocess!" in result["stdout"]
     assert result["stderr"] == ""
     assert result["error"] is None
@@ -38,6 +41,9 @@ def test_subprocess_runner_simple_script(runner: SubprocessSandboxRunner):
 def test_subprocess_runner_json_output(runner: SubprocessSandboxRunner):
     """Test script outputting JSON."""
     result = runner.execute_script(JSON_OUTPUT_SCRIPT)
+    assert "stdout" in result
+    assert "stderr" in result
+    assert "error" in result
     assert '"result": 42' in result["stdout"]
     assert result["error"] is None
 
@@ -45,8 +51,11 @@ def test_subprocess_runner_json_output(runner: SubprocessSandboxRunner):
 def test_subprocess_runner_failing_script(runner: SubprocessSandboxRunner):
     """Test running a script that raises an exception."""
     result = runner.execute_script(FAILING_SCRIPT)
+    assert "stdout" in result
+    assert "stderr" in result
     assert result["stdout"] == ""
     assert "ValueError: Intentional fail" in result["stderr"]
+    assert "error" in result
     assert result["error"] is not None
     assert "exit code 1" in result["error"]
 
@@ -59,9 +68,10 @@ def test_subprocess_runner_timeout_expires(runner: SubprocessSandboxRunner):
     result = timeout_runner.execute_script(SLEEP_SCRIPT)  # This script takes 2s
     end_time = time.monotonic()
 
+    assert "error" in result
     assert result["error"] is not None
     assert "timed out" in result["error"]
-    assert "TimeoutExpired" in result["stderr"]
+    assert "stderr" in result and "TimeoutExpired" in result["stderr"]
     # Check if it actually timed out reasonably close to the limit
     assert end_time - start_time < 1.5  # Should be around 0.5s + overhead
 
@@ -73,8 +83,8 @@ def test_subprocess_runner_timeout_sufficient(runner: SubprocessSandboxRunner):
     result = runner.execute_script(SLEEP_SCRIPT)
     end_time = time.monotonic()
 
-    assert result["error"] is None
-    assert "Done sleeping" in result["stdout"]
+    assert "error" in result and result["error"] is None
+    assert "Done sleeping" in result["stdout"]  # pyright: ignore [reportTypedDictNotRequiredAccess]
     assert end_time - start_time >= 2.0  # Ensure it actually slept
 
 
@@ -102,8 +112,8 @@ except Exception as e:
     print(json.dumps({"error": str(e)}))
 """
     result = runner.execute_script(script_with_header)
-    assert result["error"] is None, f"Execution failed: {result['stderr']}"
-    assert '"result": 200' in result["stdout"] or '"error":' in result["stdout"]
+    assert result["error"] is None, f"Execution failed: {result['stderr']}"  # pyright: ignore [reportTypedDictNotRequiredAccess]
+    assert '"result": 200' in result["stdout"] or '"error":' in result["stdout"]  # pyright: ignore [reportTypedDictNotRequiredAccess]
 
 
 def test_subprocess_runner_uv_not_found():

@@ -45,5 +45,5 @@ jobs:
         run: uv run ruff check . && uv run ruff format --check .
 
       - name: Run Pyright (Type Check)
-        run: uv run pyright .
+        run: uv run pyright sandbox
 
