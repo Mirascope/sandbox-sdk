@@ -107,7 +107,6 @@ class SubprocessSandboxRunner(SandboxRunner):
                     preexec_fn=self._pre_exec_fn,
                 )
 
-
                 result["stdout"] = process.stdout
                 result["stderr"] = process.stderr
 
