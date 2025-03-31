@@ -1,7 +1,6 @@
-"""Sandbox runner that executes code in a local subprocess."""
-
 import contextlib
 import os
+import resource
 import shutil
 import subprocess
 import tempfile
@@ -10,7 +9,6 @@ from pathlib import Path
 from .._utils import Result
 from .base import SandboxRunner
 
-# Default safe environment variables to pass through if allowed
 DEFAULT_ALLOWED_ENV_VARS = {
     "PATH",
     "HOME",
@@ -24,13 +22,13 @@ DEFAULT_ALLOWED_ENV_VARS = {
 
 
 class SubprocessSandboxRunner(SandboxRunner):
-    """Runs code in a restricted local subprocess using `uv run`."""
-
     def __init__(
         self,
         environment: dict[str, str] | None = None,
-        timeout: float | None = 60.0,  # Default timeout 60 seconds
+        timeout: float | None = 60.0,
         allowed_env_vars: set[str] | None = None,
+        cpu_time_limit: int | None = None,
+        memory_limit: int | None = None,
     ) -> None:
         """
         Initializes the SubprocessSandboxRunner.
@@ -71,6 +69,18 @@ class SubprocessSandboxRunner(SandboxRunner):
                 filtered_env[temp_var] = os.environ[temp_var]
 
         super().__init__(environment=filtered_env, timeout=timeout)
+        self.cpu_time_limit = cpu_time_limit
+        self.memory_limit = memory_limit
+
+    def _pre_exec_fn(self) -> None:
+        if self.cpu_time_limit:
+            resource.setrlimit(
+                resource.RLIMIT_CPU, (self.cpu_time_limit, self.cpu_time_limit)
+            )
+        if self.memory_limit:
+            resource.setrlimit(
+                resource.RLIMIT_AS, (self.memory_limit, self.memory_limit)
+            )
 
     def execute_script(self, script_content: str) -> Result:
         """Executes the script content using `uv run` with timeout."""
@@ -85,36 +95,38 @@ class SubprocessSandboxRunner(SandboxRunner):
 
             command = [self.uv_path, "run", "--no-project", str(tmp_path)]
 
-            process = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                env=self.environment,  # Pass the filtered environment
-                encoding="utf-8",
-                errors="replace",
-                timeout=self.timeout,  # Apply timeout
-                check=False,
-            )
-
-            result["stdout"] = process.stdout
-            result["stderr"] = process.stderr
-
-            if process.returncode != 0:
-                result["error"] = (
-                    f"Subprocess failed (exit code {process.returncode}). "
-                    f"Stderr: {process.stderr.strip()}"
+            try:
+                process = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    env=self.environment,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=self.timeout,
+                    preexec_fn=self._pre_exec_fn,
                 )
 
-        except subprocess.TimeoutExpired:
-            result["error"] = f"Subprocess timed out after {self.timeout} seconds."
-            result["stderr"] = (
-                result.get("stderr", "") + "\n[Runner Error] TimeoutExpired"
-            )
-        except FileNotFoundError:
-            raise FileNotFoundError("'uv' command path invalid.") from None
-        except Exception as e:
-            result["error"] = f"Subprocess runner unexpected error: {e}"
-            result["stderr"] = result.get("stderr", "") + f"\n[Runner Error] {e}"
+
+                result["stdout"] = process.stdout
+                result["stderr"] = process.stderr
+
+                if process.returncode != 0:
+                    result["error"] = (
+                        f"Subprocess failed (exit code {process.returncode}). "
+                        f"Stderr: {process.stderr.strip()}"
+                    )
+
+            except subprocess.TimeoutExpired:
+                result["error"] = f"Subprocess timed out after {self.timeout} seconds."
+                result["stderr"] = (
+                    result.get("stderr", "") + "\n[Runner Error] TimeoutExpired"
+                )
+            except FileNotFoundError:
+                raise FileNotFoundError("'uv' command path invalid.") from None
+            except Exception as e:
+                result["error"] = f"Subprocess runner unexpected error: {e}"
+                result["stderr"] = result.get("stderr", "") + f"\n[Runner Error] {e}"
         finally:
             if tmp_path and tmp_path.exists():
                 with contextlib.suppress(OSError):
