@@ -1,0 +1,47 @@
+name: tests
+run-name: ${{ github.actor }} is testing the package
+
+on:
+  push:
+    branches:
+      - main
+      - release/*
+  pull_request:
+    branches:
+      - main
+      - release/*
+
+jobs:
+  tests:
+    name: Tests Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh && uv --version
+
+      - name: Set up Python ${{ matrix.python-version }} (using uv)
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Restore uv cache
+        uses: actions/cache@v4
+        id: uv-cache
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/pyproject.toml', '**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-py${{ matrix.python-version }}-
+
+      - name: Install dependencies (including test, docker extras)
+        run: uv sync --all-extras --dev
+
+      - name: Run Tests with Pytest and Coverage
+        run: uv run pytest tests/ --cov=sandbox --cov-report=xml --cov-report=term
